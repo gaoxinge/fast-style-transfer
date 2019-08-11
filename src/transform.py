@@ -1,6 +1,7 @@
-import tensorflow as tf, pdb
+import tensorflow as tf
 
 WEIGHTS_INIT_STDEV = .1
+
 
 def net(image):
     conv1 = _conv_layer(image, 32, 9, 1)
@@ -17,6 +18,7 @@ def net(image):
     preds = tf.nn.tanh(conv_t3) * 150 + 255./2
     return preds
 
+
 def _conv_layer(net, num_filters, filter_size, strides, relu=True):
     weights_init = _conv_init_vars(net, num_filters, filter_size)
     strides_shape = [1, strides, strides, 1]
@@ -27,10 +29,11 @@ def _conv_layer(net, num_filters, filter_size, strides, relu=True):
 
     return net
 
+
 def _conv_tranpose_layer(net, num_filters, filter_size, strides):
     weights_init = _conv_init_vars(net, num_filters, filter_size, transpose=True)
 
-    batch_size, rows, cols, in_channels = [i.value for i in net.get_shape()]
+    batch_size, rows, cols, in_channels = [i.value for i in tf.shape(net)]
     new_rows, new_cols = int(rows * strides), int(cols * strides)
     # new_shape = #tf.pack([tf.shape(net)[0], new_rows, new_cols, num_filters])
 
@@ -42,9 +45,11 @@ def _conv_tranpose_layer(net, num_filters, filter_size, strides):
     net = _instance_norm(net)
     return tf.nn.relu(net)
 
+
 def _residual_block(net, filter_size=3):
     tmp = _conv_layer(net, 128, filter_size, 1)
     return net + _conv_layer(tmp, 128, filter_size, 1, relu=False)
+
 
 def _instance_norm(net, train=True):
     batch, rows, cols, channels = [i.value for i in net.get_shape()]
@@ -55,6 +60,7 @@ def _instance_norm(net, train=True):
     epsilon = 1e-3
     normalized = (net-mu)/(sigma_sq + epsilon)**(.5)
     return scale * normalized + shift
+
 
 def _conv_init_vars(net, out_channels, filter_size, transpose=False):
     _, rows, cols, in_channels = [i.value for i in net.get_shape()]
