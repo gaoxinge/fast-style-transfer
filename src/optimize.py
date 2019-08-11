@@ -6,7 +6,7 @@ import time
 import tensorflow as tf
 import numpy as np
 import transform
-from utils import get_img, parse_fn
+from utils import parse_fn
 
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 CONTENT_LAYER = 'relu4_2'
@@ -26,7 +26,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
     style_features = {}
 
-    batch_shape = (batch_size,256,256,3)
+    batch_shape = (batch_size, 256, 256, 3)
     style_shape = (1,) + style_target.shape
     print(style_shape)
 
@@ -105,31 +105,21 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             iterations = 0
             sess.run(iterator.initializer)
             while iterations * batch_size < num_examples:
-                start_time = time.time()
-                # curr = iterations * batch_size
-                # step = curr + batch_size
-                # X_batch = np.zeros(batch_shape, dtype=np.float32)
-                # for j, img_p in enumerate(content_targets[curr:step]):
-                #    X_batch[j] = get_img(img_p, (256,256,3)).astype(np.float32)
-
                 iterations += 1
-                # assert X_batch.shape[0] == batch_size
-
-                # train_step.run(feed_dict={X_content: X_batch})
+                start_time = time.time()
                 train_step.run()
                 end_time = time.time()
                 delta_time = end_time - start_time
                 if debug:
                     print("epoch: %s, iterations: %s, batch time: %s" % (epoch, iterations, delta_time))
+
                 is_print_iter = int(iterations) % print_iterations == 0
                 if slow:
                     is_print_iter = epoch % print_iterations == 0
                 is_last = epoch == epochs - 1 and iterations * batch_size >= num_examples
                 should_print = is_print_iter or is_last
                 if should_print:
-                    to_get = [style_loss, content_loss, tv_loss, loss, preds]
-                    # tup = sess.run(to_get, feed_dict={X_content: X_batch})
-                    tup = sess.run(to_get)
+                    tup = sess.run([style_loss, content_loss, tv_loss, loss, preds])
                     _style_loss, _content_loss, _tv_loss, _loss, _preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
