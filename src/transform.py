@@ -32,7 +32,8 @@ def _conv_layer(net, num_filters, filter_size, strides, relu=True):
 def _conv_tranpose_layer(net, num_filters, filter_size, strides):
     weights_init = _conv_init_vars(net, num_filters, filter_size, transpose=True)
 
-    batch_size, rows, cols, in_channels = [i.value for i in tf.shape(net)]
+    batch_size, rows, cols, in_channels = [i.value for i in net.get_shape()]
+    print("=======================", batch_size, rows, cols, in_channels)
     new_rows, new_cols = int(rows * strides), int(cols * strides)
     # new_shape = #tf.pack([tf.shape(net)[0], new_rows, new_cols, num_filters])
 
@@ -63,7 +64,6 @@ def _instance_norm(net, train=True):
 
 def _conv_init_vars(net, out_channels, filter_size, transpose=False):
     _, rows, cols, in_channels = [i.value for i in net.get_shape()]
-    print("===========================", _, rows, cols, in_channels)
     if not transpose:
         weights_shape = [filter_size, filter_size, in_channels, out_channels]
     else:
