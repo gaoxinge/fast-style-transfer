@@ -65,7 +65,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             )
             preds_pre = preds
         else:
-            preds = transform.net(X_batch / 255.0)
+            preds = transform.net(X_batch / 255.0, batch_size=batch_size)
             preds_pre = vgg.preprocess(preds)
 
         net = vgg.net(vgg_path, preds_pre)
