@@ -47,8 +47,8 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         num_examples = len(content_targets)
         dataset = tf.data.Dataset.from_tensor_slices(content_targets)
         # dataset = dataset.shuffle(num_examples)
-        dataset = dataset.batch(batch_size)
         dataset = dataset.map(parse_fn)
+        dataset = dataset.batch(batch_size)
         iterator = dataset.make_initializable_iterator()
         X_batch = iterator.get_next()
 
