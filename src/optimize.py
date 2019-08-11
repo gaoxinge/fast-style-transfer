@@ -1,19 +1,22 @@
 from __future__ import print_function
 import functools
-import vgg, pdb, time
-import tensorflow as tf, numpy as np, os
+from operator import mul
+import vgg
+import time
+import tensorflow as tf
+import numpy as np
 import transform
-from utils import get_img
+from utils import get_img, parse_fn
 
 STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 CONTENT_LAYER = 'relu4_2'
-DEVICES = 'CUDA_VISIBLE_DEVICES'
+
 
 # np arr, np arr
 def optimize(content_targets, style_target, content_weight, style_weight,
              tv_weight, vgg_path, epochs=2, print_iterations=1000,
              batch_size=4, save_path='saver/fns.ckpt', slow=False,
-             learning_rate=1e-3, debug=False):
+             learning_rate=1e-3, debug=True):
     if slow:
         batch_size = 1
     mod = len(content_targets) % batch_size
@@ -40,8 +43,16 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             style_features[layer] = gram
 
     with tf.Graph().as_default(), tf.Session() as sess:
-        X_content = tf.placeholder(tf.float32, shape=batch_shape, name="X_content")
-        X_pre = vgg.preprocess(X_content)
+        # dataset
+        num_examples = len(content_targets)
+        dataset = tf.data.Dataset.from_tensor_slices(content_targets)
+        dataset = dataset.map(parse_fn)
+        dataset = dataset.shuffle(num_examples)
+        dataset = dataset.batch(batch_size)
+        iterator = dataset.make_initializable_iterator()
+        X_batch = iterator.get_next()
+
+        X_pre = vgg.preprocess(X_batch)
 
         # precompute content features
         content_features = {}
@@ -50,11 +61,11 @@ def optimize(content_targets, style_target, content_weight, style_weight,
 
         if slow:
             preds = tf.Variable(
-                tf.random_normal(X_content.get_shape()) * 0.256
+                tf.random_normal(X_batch.get_shape()) * 0.256
             )
             preds_pre = preds
         else:
-            preds = transform.net(X_content/255.0)
+            preds = transform.net(X_batch / 255.0)
             preds_pre = vgg.preprocess(preds)
 
         net = vgg.net(vgg_path, preds_pre)
@@ -90,32 +101,26 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         # overall loss
         train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
         sess.run(tf.global_variables_initializer())
-        import random
-        uid = random.randint(1, 100)
-        print("UID: %s" % uid)
         for epoch in range(epochs):
-            num_examples = len(content_targets)
             iterations = 0
+            sess.run(iterator.initializer)
             while iterations * batch_size < num_examples:
                 start_time = time.time()
-                curr = iterations * batch_size
-                step = curr + batch_size
-                X_batch = np.zeros(batch_shape, dtype=np.float32)
-                for j, img_p in enumerate(content_targets[curr:step]):
-                   X_batch[j] = get_img(img_p, (256,256,3)).astype(np.float32)
+                # curr = iterations * batch_size
+                # step = curr + batch_size
+                # X_batch = np.zeros(batch_shape, dtype=np.float32)
+                # for j, img_p in enumerate(content_targets[curr:step]):
+                #    X_batch[j] = get_img(img_p, (256,256,3)).astype(np.float32)
 
                 iterations += 1
-                assert X_batch.shape[0] == batch_size
+                # assert X_batch.shape[0] == batch_size
 
-                feed_dict = {
-                   X_content:X_batch
-                }
-
-                train_step.run(feed_dict=feed_dict)
+                # train_step.run(feed_dict={X_content: X_batch})
+                train_step.run()
                 end_time = time.time()
                 delta_time = end_time - start_time
                 if debug:
-                    print("UID: %s, batch time: %s" % (uid, delta_time))
+                    print("epoch: %s, iterations: %s, batch time: %s" % (epoch, iterations, delta_time))
                 is_print_iter = int(iterations) % print_iterations == 0
                 if slow:
                     is_print_iter = epoch % print_iterations == 0
@@ -123,12 +128,9 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                 should_print = is_print_iter or is_last
                 if should_print:
                     to_get = [style_loss, content_loss, tv_loss, loss, preds]
-                    test_feed_dict = {
-                       X_content:X_batch
-                    }
-
-                    tup = sess.run(to_get, feed_dict = test_feed_dict)
-                    _style_loss,_content_loss,_tv_loss,_loss,_preds = tup
+                    # tup = sess.run(to_get, feed_dict={X_content: X_batch})
+                    tup = sess.run(to_get)
+                    _style_loss, _content_loss, _tv_loss, _loss, _preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
                        _preds = vgg.unprocess(_preds)
@@ -137,6 +139,6 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                        res = saver.save(sess, save_path)
                     yield(_preds, losses, iterations, epoch)
 
+
 def _tensor_size(tensor):
-    from operator import mul
     return functools.reduce(mul, (d.value for d in tensor.get_shape()[1:]), 1)

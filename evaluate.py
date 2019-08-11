@@ -1,24 +1,21 @@
 from __future__ import print_function
 import sys
 sys.path.insert(0, 'src')
-import transform, numpy as np, vgg, pdb, os
-import scipy.misc
+import transform
+import numpy as np
+import os
 import tensorflow as tf
 from utils import save_img, get_img, exists, list_files
 from argparse import ArgumentParser
 from collections import defaultdict
-import time
-import json
-import subprocess
-import numpy
-from moviepy.video.io.VideoFileClip import VideoFileClip
-import moviepy.video.io.ffmpeg_writer as ffmpeg_writer
 
 BATCH_SIZE = 4
 DEVICE = '/gpu:0'
 
 
 def ffwd_video(path_in, path_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
+    from moviepy.video.io.VideoFileClip import VideoFileClip
+    import moviepy.video.io.ffmpeg_writer as ffmpeg_writer
     video_clip = VideoFileClip(path_in, audio=False)
     video_writer = ffmpeg_writer.FFMPEG_VideoWriter(path_out, video_clip.size, video_clip.fps, codec="libx264",
                                                     preset="medium", bitrate="2000k",
@@ -127,9 +124,11 @@ def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
         ffwd(remaining_in, remaining_out, checkpoint_dir, 
             device_t=device_t, batch_size=1)
 
+
 def ffwd_to_img(in_path, out_path, checkpoint_dir, device='/cpu:0'):
     paths_in, paths_out = [in_path], [out_path]
     ffwd(paths_in, paths_out, checkpoint_dir, batch_size=1, device_t=device)
+
 
 def ffwd_different_dimensions(in_path, out_path, checkpoint_dir, 
             device_t=DEVICE, batch_size=4):
@@ -145,6 +144,7 @@ def ffwd_different_dimensions(in_path, out_path, checkpoint_dir,
         print('Processing images of shape %s' % shape)
         ffwd(in_path_of_shape[shape], out_path_of_shape[shape], 
             checkpoint_dir, device_t, batch_size)
+
 
 def build_parser():
     parser = ArgumentParser()
@@ -176,12 +176,14 @@ def build_parser():
 
     return parser
 
+
 def check_opts(opts):
     exists(opts.checkpoint_dir, 'Checkpoint not found!')
     exists(opts.in_path, 'In path not found!')
     if os.path.isdir(opts.out_path):
         exists(opts.out_path, 'out dir not found!')
         assert opts.batch_size > 0
+
 
 def main():
     parser = build_parser()
@@ -207,6 +209,7 @@ def main():
         else :
             ffwd(full_in, full_out, opts.checkpoint_dir, device_t=opts.device,
                     batch_size=opts.batch_size)
+
 
 if __name__ == '__main__':
     main()
