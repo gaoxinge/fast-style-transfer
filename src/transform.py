@@ -26,7 +26,6 @@ def _conv_layer(net, num_filters, filter_size, strides, relu=True):
     net = _instance_norm(net)
     if relu:
         net = tf.nn.relu(net)
-
     return net
 
 
@@ -64,6 +63,7 @@ def _instance_norm(net, train=True):
 
 def _conv_init_vars(net, out_channels, filter_size, transpose=False):
     _, rows, cols, in_channels = [i.value for i in net.get_shape()]
+    print(_, rows, cols, in_channels)
     if not transpose:
         weights_shape = [filter_size, filter_size, in_channels, out_channels]
     else:
