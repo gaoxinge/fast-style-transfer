@@ -12,11 +12,20 @@ STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
 CONTENT_LAYER = 'relu4_2'
 
 
-# np arr, np arr
-def optimize(content_targets, style_target, content_weight, style_weight,
-             tv_weight, vgg_path, epochs=2, print_iterations=1000,
-             batch_size=4, save_path='saver/fns.ckpt', slow=False,
-             learning_rate=1e-3, debug=True):
+def optimize(content_targets,
+             style_target,
+             content_weight,
+             style_weight,
+             tv_weight,
+             vgg_path,
+             pooling='max',
+             epochs=2,
+             print_iterations=1000,
+             batch_size=4,
+             save_path='saver/fns.ckpt',
+             slow=False,
+             learning_rate=1e-3,
+             debug=True):
     if slow:
         batch_size = 1
     mod = len(content_targets) % batch_size
@@ -30,11 +39,13 @@ def optimize(content_targets, style_target, content_weight, style_weight,
     style_shape = (1,) + style_target.shape
     print(style_shape)
 
+    vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
+
     # precompute style features
     with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
-        style_image_pre = vgg.preprocess(style_image)
-        net = vgg.net(vgg_path, style_image_pre)
+        style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
+        net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
         style_pre = np.array([style_target])
         for layer in STYLE_LAYERS:
             features = net[layer].eval(feed_dict={style_image:style_pre})
@@ -52,11 +63,11 @@ def optimize(content_targets, style_target, content_weight, style_weight,
         iterator = dataset.make_initializable_iterator()
         X_batch = iterator.get_next()
 
-        X_pre = vgg.preprocess(X_batch)
+        X_pre = vgg.preprocess(X_batch, vgg_mean_pixel)
 
         # precompute content features
         content_features = {}
-        content_net = vgg.net(vgg_path, X_pre)
+        content_net = vgg.net_preloaded(vgg_weights, X_pre, pooling)
         content_features[CONTENT_LAYER] = content_net[CONTENT_LAYER]
 
         if slow:
@@ -66,9 +77,9 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             preds_pre = preds
         else:
             preds = transform.net(X_batch / 255.0, batch_size=batch_size)
-            preds_pre = vgg.preprocess(preds)
+            preds_pre = vgg.preprocess(preds, vgg_mean_pixel)
 
-        net = vgg.net(vgg_path, preds_pre)
+        net = vgg.net_preloaded(vgg_weights, preds_pre, pooling)
 
         content_size = _tensor_size(content_features[CONTENT_LAYER])*batch_size
         assert _tensor_size(content_features[CONTENT_LAYER]) == _tensor_size(net[CONTENT_LAYER])
@@ -76,26 +87,27 @@ def optimize(content_targets, style_target, content_weight, style_weight,
             net[CONTENT_LAYER] - content_features[CONTENT_LAYER]) / content_size
         )
 
+        # style loss
         style_losses = []
         for style_layer in STYLE_LAYERS:
             layer = net[style_layer]
-            bs, height, width, filters = map(lambda i:i.value,layer.get_shape())
+            bs, height, width, filters = map(lambda i: i.value, layer.get_shape())
             size = height * width * filters
             feats = tf.reshape(layer, (bs, height * width, filters))
-            feats_T = tf.transpose(feats, perm=[0,2,1])
+            feats_T = tf.transpose(feats, perm=[0, 2, 1])
             grams = tf.matmul(feats_T, feats) / size
             style_gram = style_features[style_layer]
             style_losses.append(2 * tf.nn.l2_loss(grams - style_gram)/style_gram.size)
-
         style_loss = style_weight * functools.reduce(tf.add, style_losses) / batch_size
 
         # total variation denoising
-        tv_y_size = _tensor_size(preds[:,1:,:,:])
-        tv_x_size = _tensor_size(preds[:,:,1:,:])
-        y_tv = tf.nn.l2_loss(preds[:,1:,:,:] - preds[:,:batch_shape[1]-1,:,:])
-        x_tv = tf.nn.l2_loss(preds[:,:,1:,:] - preds[:,:,:batch_shape[2]-1,:])
-        tv_loss = tv_weight*2*(x_tv/tv_x_size + y_tv/tv_y_size)/batch_size
+        tv_y_size = _tensor_size(preds[:, 1:, :, :])
+        tv_x_size = _tensor_size(preds[:, :, 1:, :])
+        y_tv = tf.nn.l2_loss(preds[:, 1:, :, :] - preds[:, :batch_shape[1] - 1, :, :])
+        x_tv = tf.nn.l2_loss(preds[:, :, 1:, :] - preds[:, :, :batch_shape[2] - 1, :])
+        tv_loss = tv_weight * 2 * (x_tv / tv_x_size + y_tv / tv_y_size) / batch_size
 
+        # total loss
         loss = content_loss + style_loss + tv_loss
 
         # overall loss
@@ -123,7 +135,7 @@ def optimize(content_targets, style_target, content_weight, style_weight,
                     _style_loss, _content_loss, _tv_loss, _loss, _preds = tup
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
-                       _preds = vgg.unprocess(_preds)
+                       _preds = vgg.unprocess(_preds, vgg_mean_pixel)
                     else:
                        saver = tf.train.Saver()
                        res = saver.save(sess, save_path)
