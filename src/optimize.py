@@ -8,9 +8,6 @@ import numpy as np
 import transform
 from utils import parse_fn
 
-STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
-CONTENT_LAYER = 'relu4_2'
-
 
 def optimize(content_targets,
              style_target,
@@ -30,29 +27,26 @@ def optimize(content_targets,
         batch_size = 1
     mod = len(content_targets) % batch_size
     if mod > 0:
-        print("Train set has been trimmed slightly..")
-        content_targets = content_targets[:-mod] 
-
-    style_features = {}
+        content_targets = content_targets[:-mod]
 
     batch_shape = (batch_size, 256, 256, 3)
     style_shape = (1,) + style_target.shape
-    print(style_shape)
-
+    style_features = {}
     vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
 
-    # precompute style features
+    # compute style features in feedforward mode
     with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
         style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
         net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
         style_pre = np.array([style_target])
-        for layer in STYLE_LAYERS:
-            features = net[layer].eval(feed_dict={style_image:style_pre})
+        for layer in vgg.STYLE_LAYERS:
+            features = net[layer].eval(feed_dict={style_image: style_pre})
             features = np.reshape(features, (-1, features.shape[3]))
             gram = np.matmul(features.T, features) / features.size
             style_features[layer] = gram
 
+    # make stylized image using backpropogation
     with tf.Graph().as_default(), tf.Session() as sess:
         # dataset
         num_examples = len(content_targets)
@@ -63,33 +57,25 @@ def optimize(content_targets,
         iterator = dataset.make_initializable_iterator()
         X_batch = iterator.get_next()
 
+        # content loss
         X_pre = vgg.preprocess(X_batch, vgg_mean_pixel)
-
-        # precompute content features
-        content_features = {}
         content_net = vgg.net_preloaded(vgg_weights, X_pre, pooling)
-        content_features[CONTENT_LAYER] = content_net[CONTENT_LAYER]
+        content_features = {vgg.CONTENT_LAYER: content_net[vgg.CONTENT_LAYER]}
 
         if slow:
-            preds = tf.Variable(
-                tf.random_normal(X_batch.get_shape()) * 0.256
-            )
+            preds = tf.Variable(tf.random_normal(X_batch.get_shape()) * 0.256)
             preds_pre = preds
         else:
             preds = transform.net(X_batch / 255.0, batch_size=batch_size)
             preds_pre = vgg.preprocess(preds, vgg_mean_pixel)
-
         net = vgg.net_preloaded(vgg_weights, preds_pre, pooling)
 
-        content_size = _tensor_size(content_features[CONTENT_LAYER])*batch_size
-        assert _tensor_size(content_features[CONTENT_LAYER]) == _tensor_size(net[CONTENT_LAYER])
-        content_loss = content_weight * (2 * tf.nn.l2_loss(
-            net[CONTENT_LAYER] - content_features[CONTENT_LAYER]) / content_size
-        )
+        content_size = _tensor_size(content_features[vgg.CONTENT_LAYER]) * batch_size
+        content_loss = content_weight * (2 * tf.nn.l2_loss(net[vgg.CONTENT_LAYER] - content_features[vgg.CONTENT_LAYER]) / content_size)
 
         # style loss
         style_losses = []
-        for style_layer in STYLE_LAYERS:
+        for style_layer in vgg.STYLE_LAYERS:
             layer = net[style_layer]
             bs, height, width, filters = map(lambda i: i.value, layer.get_shape())
             size = height * width * filters
@@ -97,7 +83,7 @@ def optimize(content_targets,
             feats_T = tf.transpose(feats, perm=[0, 2, 1])
             grams = tf.matmul(feats_T, feats) / size
             style_gram = style_features[style_layer]
-            style_losses.append(2 * tf.nn.l2_loss(grams - style_gram)/style_gram.size)
+            style_losses.append(2 * tf.nn.l2_loss(grams - style_gram) / style_gram.size)
         style_loss = style_weight * functools.reduce(tf.add, style_losses) / batch_size
 
         # total variation denoising

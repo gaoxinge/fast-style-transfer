@@ -19,6 +19,9 @@ VGG19_LAYERS = (
     'relu5_3', 'conv5_4', 'relu5_4'
 )
 
+CONTENT_LAYER = 'relu4_2'
+STYLE_LAYERS = ('relu1_1', 'relu2_1', 'relu3_1', 'relu4_1', 'relu5_1')
+
 
 def load_net(data_path):
     data = scipy.io.loadmat(data_path)
