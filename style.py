@@ -1,7 +1,7 @@
 from __future__ import print_function
-import sys, os, pdb
+import sys
+import os
 sys.path.insert(0, 'src')
-import numpy as np, scipy.misc 
 from optimize import optimize
 from argparse import ArgumentParser
 from utils import save_img, get_img, exists, list_files
@@ -20,6 +20,7 @@ TRAIN_PATH = 'data/train2014'
 BATCH_SIZE = 4
 DEVICE = '/gpu:0'
 FRAC_GPU = 1
+
 
 def build_parser():
     parser = ArgumentParser()
@@ -87,6 +88,7 @@ def build_parser():
 
     return parser
 
+
 def check_opts(opts):
     exists(opts.checkpoint_dir, "checkpoint dir not found!")
     exists(opts.style, "style path not found!")
@@ -104,11 +106,12 @@ def check_opts(opts):
     assert opts.tv_weight >= 0
     assert opts.learning_rate >= 0
 
+
 def _get_files(img_dir):
     files = list_files(img_dir)
     return [os.path.join(img_dir,x) for x in files]
 
-    
+
 def main():
     parser = build_parser()
     options = parser.parse_args()
@@ -162,6 +165,7 @@ def main():
     ckpt_dir = options.checkpoint_dir
     cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
     print("Training complete. For evaluation:\n    `%s`" % cmd_text)
+
 
 if __name__ == '__main__':
     main()

@@ -2,13 +2,14 @@ from __future__ import print_function
 from argparse import ArgumentParser
 import sys
 sys.path.insert(0, 'src')
-import os, random, subprocess, evaluate, shutil
+import random
+import evaluate
 from utils import exists, list_files
-import pdb
 
-TMP_DIR = '.fns_frames_%s/' % random.randint(0,99999)
+TMP_DIR = '.fns_frames_%s/' % random.randint(0, 99999)
 DEVICE = '/gpu:0'
 BATCH_SIZE = 4
+
 
 def build_parser():
     parser = ArgumentParser()
@@ -41,9 +42,11 @@ def build_parser():
                         metavar='NO_DISK', default=False)
     return parser
 
+
 def check_opts(opts):
     exists(opts.checkpoint)
     exists(opts.out)
+
 
 def main():
     parser = build_parser()
@@ -53,5 +56,3 @@ def main():
  
 if __name__ == '__main__':
     main()
-
-
