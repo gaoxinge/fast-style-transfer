@@ -65,10 +65,10 @@ Use `style.py` to train a new style transfer network. Run `python style.py` to v
       --checkpoint-iterations 1000 \
       --batch-size 20
 
-### Evaluating Style Transfer Networks
-Use `evaluate.py` to evaluate a style transfer network. Run `python evaluate.py` to view all the possible parameters. Evaluation takes 100 ms per frame (when batch size is 1) on a Maxwell Titan X. [More detailed documentation here](docs.md#evaluatepy). Takes several seconds per frame on a CPU. **Models for evaluation are [located here](https://drive.google.com/drive/folders/0B9jhaT37ydSyRk9UX0wwX3BpMzQ?usp=sharing)**. Example usage:
+### Evaluating Style Transfer Networks / Stylizing Image
+Use `transform_image.py` to evaluate a style transfer network. Run `python trainsform_image.py` to view all the possible parameters. Evaluation takes 100 ms per frame (when batch size is 1) on a Maxwell Titan X. [More detailed documentation here](docs.md#evaluatepy). Takes several seconds per frame on a CPU. **Models for evaluation are [located here](https://drive.google.com/drive/folders/0B9jhaT37ydSyRk9UX0wwX3BpMzQ?usp=sharing)**. Example usage:
 
-    python evaluate.py --checkpoint path/to/style/model.ckpt \
+    python transform_image.py --checkpoint path/to/style/model.ckpt \
       --in-path dir/of/test/imgs/ \
       --out-path dir/for/results/
 
