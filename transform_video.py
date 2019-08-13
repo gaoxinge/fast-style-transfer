@@ -1,7 +1,7 @@
 import random
 from argparse import ArgumentParser
+from src import evaluate
 from src import utils
-import evaluate
 
 TMP_DIR = '.fns_frames_%s/' % random.randint(0, 99999)
 DEVICE = '/gpu:0'

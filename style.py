@@ -2,7 +2,7 @@ import os
 from argparse import ArgumentParser
 from src import optimize
 from src import utils
-import evaluate
+import transform_image
 
 CONTENT_WEIGHT = 7.5e0
 STYLE_WEIGHT = 1e2
@@ -155,8 +155,8 @@ def main():
             preds_path = '%s/%s_%s.png' % (options.test_dir,epoch,i)
             if not options.slow:
                 ckpt_dir = os.path.dirname(options.checkpoint_dir)
-                evaluate.ffwd_to_img(options.test,preds_path,
-                                     options.checkpoint_dir)
+                transform_image.ffwd_to_img(options.test, preds_path,
+                                            options.checkpoint_dir)
             else:
                 utils.save_img(preds_path, img)
     ckpt_dir = options.checkpoint_dir
