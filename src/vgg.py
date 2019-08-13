@@ -73,7 +73,7 @@ def _pool_layer(input, pooling):
     if pooling == 'avg':
         return tf.nn.avg_pool(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1), padding='SAME')
     else:
-        return tf.nn.max_pool(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1), padding='SAME')
+        return tf.nn.max_pool2d(input, ksize=(1, 2, 2, 1), strides=(1, 2, 2, 1), padding='SAME')
 
 
 def preprocess(image, mean_pixel):
