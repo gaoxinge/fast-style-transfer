@@ -1,10 +1,7 @@
-from __future__ import print_function
-import sys
 import os
-sys.path.insert(0, 'src')
-from optimize import optimize
 from argparse import ArgumentParser
-from utils import save_img, get_img, exists, list_files
+from src import optimize
+from src import utils
 import evaluate
 
 CONTENT_WEIGHT = 7.5e0
@@ -90,13 +87,13 @@ def build_parser():
 
 
 def check_opts(opts):
-    exists(opts.checkpoint_dir, "checkpoint dir not found!")
-    exists(opts.style, "style path not found!")
-    exists(opts.train_path, "train path not found!")
+    utils.exists(opts.checkpoint_dir, "checkpoint dir not found!")
+    utils.exists(opts.style, "style path not found!")
+    utils.exists(opts.train_path, "train path not found!")
     if opts.test or opts.test_dir:
-        exists(opts.test, "test img not found!")
-        exists(opts.test_dir, "test directory not found!")
-    exists(opts.vgg_path, "vgg network data not found!")
+        utils.exists(opts.test, "test img not found!")
+        utils.exists(opts.test_dir, "test directory not found!")
+    utils.exists(opts.vgg_path, "vgg network data not found!")
     assert opts.epochs > 0
     assert opts.batch_size > 0
     assert opts.checkpoint_iterations > 0
@@ -108,8 +105,8 @@ def check_opts(opts):
 
 
 def _get_files(img_dir):
-    files = list_files(img_dir)
-    return [os.path.join(img_dir,x) for x in files]
+    files = utils.list_files(img_dir)
+    return [os.path.join(img_dir, x) for x in files]
 
 
 def main():
@@ -117,19 +114,19 @@ def main():
     options = parser.parse_args()
     check_opts(options)
 
-    style_target = get_img(options.style)
+    style_target = utils.get_img(options.style)
     if not options.slow:
         content_targets = _get_files(options.train_path)
     elif options.test:
         content_targets = [options.test]
 
     kwargs = {
-        "slow":options.slow,
-        "epochs":options.epochs,
-        "print_iterations":options.checkpoint_iterations,
-        "batch_size":options.batch_size,
-        "save_path":os.path.join(options.checkpoint_dir,'fns.ckpt'),
-        "learning_rate":options.learning_rate
+        "slow": options.slow,
+        "epochs": options.epochs,
+        "print_iterations": options.checkpoint_iterations,
+        "batch_size": options.batch_size,
+        "save_path": os.path.join(options.checkpoint_dir, 'fns.ckpt'),
+        "learning_rate": options.learning_rate
     }
 
     if options.slow:
@@ -147,7 +144,7 @@ def main():
         options.vgg_path
     ]
 
-    for preds, losses, i, epoch in optimize(*args, **kwargs):
+    for preds, losses, i, epoch in optimize.optimize(*args, **kwargs):
         style_loss, content_loss, tv_loss, loss = losses
 
         print('Epoch %d, Iteration: %d, Loss: %s' % (epoch, i, loss))
@@ -161,7 +158,7 @@ def main():
                 evaluate.ffwd_to_img(options.test,preds_path,
                                      options.checkpoint_dir)
             else:
-                save_img(preds_path, img)
+                utils.save_img(preds_path, img)
     ckpt_dir = options.checkpoint_dir
     cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
     print("Training complete. For evaluation:\n    `%s`" % cmd_text)

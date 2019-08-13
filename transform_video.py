@@ -1,10 +1,7 @@
-from __future__ import print_function
-from argparse import ArgumentParser
-import sys
-sys.path.insert(0, 'src')
 import random
+from argparse import ArgumentParser
+from src import utils
 import evaluate
-from utils import exists, list_files
 
 TMP_DIR = '.fns_frames_%s/' % random.randint(0, 99999)
 DEVICE = '/gpu:0'
@@ -44,8 +41,8 @@ def build_parser():
 
 
 def check_opts(opts):
-    exists(opts.checkpoint)
-    exists(opts.out)
+    utils.exists(opts.checkpoint)
+    utils.exists(opts.out)
 
 
 def main():

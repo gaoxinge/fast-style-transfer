@@ -1,12 +1,11 @@
-from __future__ import print_function
+import time
 import functools
 from operator import mul
-import vgg
-import time
-import tensorflow as tf
 import numpy as np
-import transform
-from utils import parse_fn
+import tensorflow as tf
+from . import vgg
+from . import transform
+from . import utils
 
 
 def optimize(content_targets,
@@ -52,7 +51,7 @@ def optimize(content_targets,
         num_examples = len(content_targets)
         dataset = tf.data.Dataset.from_tensor_slices(content_targets)
         # dataset = dataset.shuffle(num_examples)
-        dataset = dataset.map(parse_fn)
+        dataset = dataset.map(utils.parse_fn)
         dataset = dataset.batch(batch_size)
         iterator = dataset.make_initializable_iterator()
         X_batch = iterator.get_next()
