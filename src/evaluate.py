@@ -2,14 +2,12 @@ import os
 from collections import defaultdict
 import numpy as np
 import tensorflow as tf
+from .consts import BATCH_SIZE, GPU_DEVICE, CPU_DEVICE
 from . import transform
 from . import utils
 
-BATCH_SIZE = 4
-DEVICE = '/gpu:0'
 
-
-def ffwd_video(path_in, path_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
+def ffwd_video(path_in, path_out, checkpoint_dir, device_t=GPU_DEVICE, batch_size=BATCH_SIZE):
     from moviepy.video.io.VideoFileClip import VideoFileClip
     import moviepy.video.io.ffmpeg_writer as ffmpeg_writer
     video_clip = VideoFileClip(path_in, audio=False)
@@ -58,7 +56,7 @@ def ffwd_video(path_in, path_out, checkpoint_dir, device_t='/gpu:0', batch_size=
         video_writer.close()
 
 
-def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
+def ffwd(data_in, paths_out, checkpoint_dir, device_t=GPU_DEVICE, batch_size=BATCH_SIZE):
     assert len(paths_out) > 0
     is_paths = type(data_in[0]) == str
     if is_paths:
@@ -112,12 +110,12 @@ def ffwd(data_in, paths_out, checkpoint_dir, device_t='/gpu:0', batch_size=4):
         ffwd(remaining_in, remaining_out, checkpoint_dir, device_t=device_t, batch_size=1)
 
 
-def ffwd_to_img(in_path, out_path, checkpoint_dir, device='/cpu:0'):
+def ffwd_to_img(in_path, out_path, checkpoint_dir, device=CPU_DEVICE):
     paths_in, paths_out = [in_path], [out_path]
     ffwd(paths_in, paths_out, checkpoint_dir, batch_size=1, device_t=device)
 
 
-def ffwd_different_dimensions(in_path, out_path, checkpoint_dir, device_t=DEVICE, batch_size=4):
+def ffwd_different_dimensions(in_path, out_path, checkpoint_dir, device_t=GPU_DEVICE, batch_size=BATCH_SIZE):
     in_path_of_shape = defaultdict(list)
     out_path_of_shape = defaultdict(list)
     for i in range(len(in_path)):

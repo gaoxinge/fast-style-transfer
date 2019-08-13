@@ -1,11 +1,7 @@
-import random
 from argparse import ArgumentParser
+from src.consts import BATCH_SIZE, GPU_DEVICE, TMP_DIR
 from src import evaluate
 from src import utils
-
-TMP_DIR = '.fns_frames_%s/' % random.randint(0, 99999)
-DEVICE = '/gpu:0'
-BATCH_SIZE = 4
 
 
 def build_parser():
@@ -28,7 +24,7 @@ def build_parser():
 
     parser.add_argument('--device', type=str, dest='device',
                         help='device for eval. CPU discouraged. ex: \'/gpu:0\'',
-                        metavar='DEVICE', default=DEVICE)
+                        metavar='DEVICE', default=GPU_DEVICE)
 
     parser.add_argument('--batch-size', type=int,
                         dest='batch_size',help='batch size for eval. default 4.',

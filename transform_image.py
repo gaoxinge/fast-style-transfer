@@ -1,10 +1,8 @@
 import os
 from argparse import ArgumentParser
+from src.consts import BATCH_SIZE, GPU_DEVICE
 from src import evaluate
 from src import utils
-
-BATCH_SIZE = 4
-DEVICE = '/gpu:0'
 
 
 def build_parser():
@@ -26,7 +24,7 @@ def build_parser():
 
     parser.add_argument('--device', type=str,
                         dest='device', help='device to perform compute on',
-                        metavar='DEVICE', default=DEVICE)
+                        metavar='DEVICE', default=GPU_DEVICE)
 
     parser.add_argument('--batch-size', type=int,
                         dest='batch_size', help='batch size for feedforwarding',

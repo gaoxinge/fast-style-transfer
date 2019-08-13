@@ -1,22 +1,10 @@
 import os
 from argparse import ArgumentParser
+from src.consts import CONTENT_WEIGHT, STYLE_WEIGHT, TV_WEIGHT, LEARNING_RATE, NUM_EPOCHS, BATCH_SIZE, \
+    CHECKPOINT_ITERATIONS, VGG_PATH, TRAIN_PATH
 from src import optimize
 from src import evaluate
 from src import utils
-
-CONTENT_WEIGHT = 7.5e0
-STYLE_WEIGHT = 1e2
-TV_WEIGHT = 2e2
-
-LEARNING_RATE = 1e-3
-NUM_EPOCHS = 2
-CHECKPOINT_DIR = 'checkpoints'
-CHECKPOINT_ITERATIONS = 2000
-VGG_PATH = 'data/imagenet-vgg-verydeep-19.mat'
-TRAIN_PATH = 'data/train2014'
-BATCH_SIZE = 4
-DEVICE = '/gpu:0'
-FRAC_GPU = 1
 
 
 def build_parser():
