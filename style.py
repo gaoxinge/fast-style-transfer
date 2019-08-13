@@ -152,11 +152,10 @@ def main():
         print('style: %s, content:%s, tv: %s' % to_print)
         if options.test:
             assert options.test_dir != False
-            preds_path = '%s/%s_%s.png' % (options.test_dir,epoch,i)
+            preds_path = '%s/%s_%s.png' % (options.test_dir, epoch, i)
             if not options.slow:
                 ckpt_dir = os.path.dirname(options.checkpoint_dir)
-                evaluate.ffwd_to_img(options.test, preds_path,
-                                            options.checkpoint_dir)
+                evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
             else:
                 utils.save_img(preds_path, img)
     ckpt_dir = options.checkpoint_dir
