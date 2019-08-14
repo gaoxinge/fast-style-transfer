@@ -34,19 +34,7 @@ def optimize(content_targets,
     vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
 
     # compute style features in feedforward mode
-    # with tf.Graph().as_default(), tf.device('/cpu:0'), tf.Session() as sess:
-    #     style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
-    #     style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
-    #     net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
-    #     style_pre = np.array([style_target])
-    #     for layer in vgg.STYLE_LAYERS:
-    #         features = net[layer].eval(feed_dict={style_image: style_pre})
-    #         features = np.reshape(features, (-1, features.shape[3]))
-    #         gram = np.matmul(features.T, features) / features.size
-    #         style_features[layer] = gram
-
-    # make stylized image using backpropogation
-    with tf.Graph().as_default(), tf.Session() as sess:
+    with tf.Graph().as_default(), tf.device('/gpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
         style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
         net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
@@ -56,6 +44,18 @@ def optimize(content_targets,
             features = np.reshape(features, (-1, features.shape[3]))
             gram = np.matmul(features.T, features) / features.size
             style_features[layer] = gram
+
+    # make stylized image using backpropogation
+    with tf.Graph().as_default(), tf.Session() as sess:
+        # style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
+        # style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
+        # net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
+        # style_pre = np.array([style_target])
+        # for layer in vgg.STYLE_LAYERS:
+        #     features = net[layer].eval(feed_dict={style_image: style_pre})
+        #     features = np.reshape(features, (-1, features.shape[3]))
+        #     gram = np.matmul(features.T, features) / features.size
+        #     style_features[layer] = gram
 
         # dataset
         num_examples = len(content_targets)
