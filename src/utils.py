@@ -10,30 +10,24 @@ def save_img(out_path, img):
 
 
 def scale_img(style_path, style_scale):
-    scale = float(style_scale)
     o0, o1, o2 = scipy.misc.imread(style_path, mode='RGB').shape
+    scale = float(style_scale)
     new_shape = (int(o0 * scale), int(o1 * scale), o2)
-    style_target = _get_img(style_path, img_size=new_shape)
+    style_target = get_img(style_path, img_size=new_shape)
     return style_target
 
 
-def get_img(src, img_size=False):
+def get_img(src, img_size=None):
     img = scipy.misc.imread(src, mode='RGB')
     if not (len(img.shape) == 3 and img.shape[2] == 3):
         img = np.dstack((img, img, img))
-    if img_size:
+    if img_size is not None:
         img = scipy.misc.imresize(img, img_size)
     return img
 
 
-def get_img2(filename):
-    img_raw = tf.io.read_file(filename)
-    img_tensor = tf.image.decode_jpeg(img_raw, channels=3)
-    return img_tensor
-
-
-def parse_fn(filename):
-    img_raw = tf.io.read_file(filename)
+def get_img_tensor(src):
+    img_raw = tf.io.read_file(src)
     img_tensor = tf.image.decode_jpeg(img_raw, channels=3)
     img_tensor = tf.image.resize(img_tensor, [256, 256])
     img_tensor = tf.cast(img_tensor, tf.float32)
@@ -46,7 +40,7 @@ def exists(p, msg):
 
 def list_files(in_path):
     files = []
-    for dirpath, dirnames, filenames in os.walk(in_path):
-        files.extend(filenames)
+    for dir_path, dir_names, file_names in os.walk(in_path):
+        files.extend(file_names)
         break
     return files

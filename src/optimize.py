@@ -29,45 +29,30 @@ def optimize(content_targets,
         content_targets = content_targets[:-mod]
 
     batch_shape = (batch_size, 256, 256, 3)
-    print("=================================")
-    print(style_target.shape)
-    print(style_target.get_shape())
-    print(tf.shape(style_target))
-    print("================================")
     style_shape = (1,) + style_target.shape
 
     style_features = {}
     vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
 
     # compute style features in feedforward mode
-    # with tf.Graph().as_default(), tf.device('/gpu:0'), tf.Session() as sess:
-    #     style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
-    #     style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
-    #     net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
-    #     style_pre = np.array([style_target])
-    #     for layer in vgg.STYLE_LAYERS:
-    #         features = net[layer].eval(feed_dict={style_image: style_pre})
-    #         features = np.reshape(features, (-1, features.shape[3]))
-    #         gram = np.matmul(features.T, features) / features.size
-    #         style_features[layer] = gram
-
-    # make stylized image using backpropogation
-    with tf.Graph().as_default(), tf.Session() as sess:
+    with tf.Graph().as_default(), tf.device('/gpu:0'), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
         style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
         net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
-        style_pre = [style_target]
+        style_pre = np.array([style_target])
         for layer in vgg.STYLE_LAYERS:
             features = net[layer].eval(feed_dict={style_image: style_pre})
-            features = tf.reshape(features, (-1, features.shape[3]))
-            gram = tf.matmul(features.T, features) / features.size
+            features = np.reshape(features, (-1, features.shape[3]))
+            gram = np.matmul(features.T, features) / features.size
             style_features[layer] = gram
 
+    # make stylized image using backpropogation
+    with tf.Graph().as_default(), tf.Session() as sess:
         # dataset
         num_examples = len(content_targets)
         dataset = tf.data.Dataset.from_tensor_slices(content_targets)
         # dataset = dataset.shuffle(num_examples)
-        dataset = dataset.map(utils.parse_fn)
+        dataset = dataset.map(utils.get_img_tensor)
         dataset = dataset.batch(batch_size)
         iterator = dataset.make_initializable_iterator()
         X_batch = iterator.get_next()

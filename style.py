@@ -102,11 +102,8 @@ def main():
     options = parser.parse_args()
     check_opts(options)
 
-    style_target = utils.get_img2(options.style)
-    if not options.slow:
-        content_targets = _get_files(options.train_path)
-    elif options.test:
-        content_targets = [options.test]
+    content_targets = _get_files(options.train_path) if not options.slow else [options.test]
+    style_target = utils.get_img(options.style)
 
     kwargs = {
         "slow": options.slow,
@@ -134,18 +131,15 @@ def main():
 
     for preds, losses, i, epoch in optimize.optimize(*args, **kwargs):
         style_loss, content_loss, tv_loss, loss = losses
-
-        print('Epoch %d, Iteration: %d, Loss: %s' % (epoch, i, loss))
-        to_print = (style_loss, content_loss, tv_loss)
-        print('style: %s, content:%s, tv: %s' % to_print)
+        print('epoch %d, iteration: %d, loss: %s, style: %s, content: %s, tv: %s' % (epoch, i, loss, style_loss,
+                                                                                     content_loss, tv_loss))
         if options.test:
             assert options.test_dir != False
             preds_path = '%s/%s_%s.png' % (options.test_dir, epoch, i)
             if not options.slow:
-                ckpt_dir = os.path.dirname(options.checkpoint_dir)
                 evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
             else:
-                utils.save_img(preds_path, img)
+                evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
     ckpt_dir = options.checkpoint_dir
     cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
     print("Training complete. For evaluation:\n    `%s`" % cmd_text)
