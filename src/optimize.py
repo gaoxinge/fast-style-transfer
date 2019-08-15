@@ -64,8 +64,8 @@ def optimize(content_targets,
         content_features = {vgg.CONTENT_LAYER: content_net[vgg.CONTENT_LAYER]}
 
         if slow:
-            _, rows, cols, in_channels = X_batch.get_shape()
-            preds = tf.Variable(tf.random_normal((batch_size, rows, cols, in_channels)) * 0.256)
+            _, rows, cols, in_channels = [i.value for i in X_batch.get_shape()]
+            preds = tf.Variable(tf.random.normal((batch_size, rows, cols, in_channels)) * 0.256)
             preds_pre = preds
         else:
             preds = transform.net(X_batch / 255.0, batch_size=batch_size)
