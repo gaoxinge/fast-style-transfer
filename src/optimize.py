@@ -120,10 +120,11 @@ def optimize(content_targets,
                 is_last = epoch == epochs - 1 and iterations * batch_size >= num_examples
                 should_print = is_print_iter or is_last
                 if should_print:
-                    _style_loss, _content_loss, _tv_loss, _loss, _preds = sess.run([style_loss, content_loss, tv_loss,
-                                                                                    loss, preds])
+                    _style_loss, _content_loss, _tv_loss, _loss = sess.run([style_loss, content_loss, tv_loss,
+                                                                                    loss])
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
+                       _preds = preds.eval()
                        _preds = vgg.unprocess(_preds, vgg_mean_pixel)
                     else:
                        saver = tf.train.Saver()
