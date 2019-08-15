@@ -102,7 +102,7 @@ def main():
     options = parser.parse_args()
     check_opts(options)
 
-    style_target = utils.get_img(options.style)
+    style_target = utils.get_img2(options.style)
     if not options.slow:
         content_targets = _get_files(options.train_path)
     elif options.test:

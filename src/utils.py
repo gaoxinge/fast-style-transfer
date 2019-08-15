@@ -26,6 +26,12 @@ def get_img(src, img_size=False):
     return img
 
 
+def get_img2(filename):
+    img_raw = tf.io.read_file(filename)
+    img_tensor = tf.image.decode_jpeg(img_raw, channels=3)
+    return img_tensor
+
+
 def parse_fn(filename):
     img_raw = tf.io.read_file(filename)
     img_tensor = tf.image.decode_jpeg(img_raw, channels=3)
