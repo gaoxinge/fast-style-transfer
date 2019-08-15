@@ -29,7 +29,13 @@ def optimize(content_targets,
         content_targets = content_targets[:-mod]
 
     batch_shape = (batch_size, 256, 256, 3)
+    print("=================================")
+    print(style_target.shape)
+    print(style_target.get_shape())
+    print(tf.get_shape(style_target))
+    print("================================")
     style_shape = (1,) + style_target.shape
+
     style_features = {}
     vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
 
