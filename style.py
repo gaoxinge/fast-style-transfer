@@ -137,12 +137,9 @@ def main():
             assert options.test_dir != False
             preds_path = '%s/%s_%s.png' % (options.test_dir, epoch, i)
             if options.slow:
-                evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
+                utils.save_img(preds_path, img)
             else:
                 evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
-    ckpt_dir = options.checkpoint_dir
-    cmd_text = 'python evaluate.py --checkpoint %s ...' % ckpt_dir
-    print("Training complete. For evaluation:\n    `%s`" % cmd_text)
 
 
 if __name__ == '__main__':

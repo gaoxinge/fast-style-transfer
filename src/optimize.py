@@ -9,6 +9,10 @@ from . import transform
 from . import utils
 
 
+def _tensor_size(tensor):
+    return functools.reduce(mul, (d.value for d in tensor.get_shape()[1:]), 1)
+
+
 def optimize(content_targets,
              style_target,
              content_weight,
@@ -21,8 +25,7 @@ def optimize(content_targets,
              batch_size=4,
              save_path='saver/fns.ckpt',
              slow=False,
-             learning_rate=1e-3,
-             debug=True):
+             learning_rate=1e-3):
     if slow:
         batch_size = 1
     mod = len(content_targets) % batch_size
@@ -111,8 +114,8 @@ def optimize(content_targets,
                 train_step.run()
                 end_time = time.time()
                 delta_time = end_time - start_time
-                if debug:
-                    print("epoch: %s, iterations: %s, batch time: %s" % (epoch, iterations, delta_time))
+
+                print('epoch: %s, iterations: %s, batch time: %s' % (epoch, iterations, delta_time))
 
                 is_print_iter = int(iterations) % print_iterations == 0
                 if slow:
@@ -120,17 +123,12 @@ def optimize(content_targets,
                 is_last = epoch == epochs - 1 and iterations * batch_size >= num_examples
                 should_print = is_print_iter or is_last
                 if should_print:
-                    _style_loss, _content_loss, _tv_loss, _loss = sess.run([style_loss, content_loss, tv_loss,
-                                                                                    loss])
+                    _style_loss, _content_loss, _tv_loss, _loss, _preds = sess.run([style_loss, content_loss, tv_loss,
+                                                                                    loss, preds])
                     losses = (_style_loss, _content_loss, _tv_loss, _loss)
                     if slow:
-                       _preds = preds.eval()
                        _preds = vgg.unprocess(_preds, vgg_mean_pixel)
                     else:
                        saver = tf.train.Saver()
-                       res = saver.save(sess, save_path)
+                       saver.save(sess, save_path)
                     yield _preds, losses, iterations, epoch
-
-
-def _tensor_size(tensor):
-    return functools.reduce(mul, (d.value for d in tensor.get_shape()[1:]), 1)
