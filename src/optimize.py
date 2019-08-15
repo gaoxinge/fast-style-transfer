@@ -32,7 +32,7 @@ def optimize(content_targets,
     print("=================================")
     print(style_target.shape)
     print(style_target.get_shape())
-    print(tf.get_shape(style_target))
+    print(tf.shape(style_target))
     print("================================")
     style_shape = (1,) + style_target.shape
 
