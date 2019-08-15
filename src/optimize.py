@@ -3,6 +3,7 @@ import functools
 from operator import mul
 import numpy as np
 import tensorflow as tf
+from .consts import CPU_DEVICE
 from . import vgg
 from . import transform
 from . import utils
@@ -35,7 +36,7 @@ def optimize(content_targets,
     vgg_weights, vgg_mean_pixel = vgg.load_net(vgg_path)
 
     # compute style features in feedforward mode
-    with tf.Graph().as_default(), tf.device('/gpu:0'), tf.Session() as sess:
+    with tf.Graph().as_default(), tf.device(CPU_DEVICE), tf.Session() as sess:
         style_image = tf.placeholder(tf.float32, shape=style_shape, name='style_image')
         style_image_pre = vgg.preprocess(style_image, vgg_mean_pixel)
         net = vgg.net_preloaded(vgg_weights, style_image_pre, pooling)
