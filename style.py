@@ -136,7 +136,7 @@ def main():
         if options.test:
             assert options.test_dir != False
             preds_path = '%s/%s_%s.png' % (options.test_dir, epoch, i)
-            if not options.slow:
+            if options.slow:
                 evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
             else:
                 evaluate.ffwd_to_img(options.test, preds_path, options.checkpoint_dir)
